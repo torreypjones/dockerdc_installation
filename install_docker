@@ -1,0 +1,97 @@
+#!/bin/bash
+
+yum install -y bind-utils
+
+
+rpm --import "https://sks-keyservers.net/pks/lookup?op=get&search=0xee6d536cf7dc86e2d7d56f59a178ac6c6238f52e"
+yum install -y yum-utils
+yum-config-manager --add-repo https://packages.docker.com/1.12/yum/repo/main/centos/7
+
+echo ""
+echo ""
+echo "the previous stuff was just house cleaning... actually installing docker now... press enter to continue"
+read entertocontinue
+yum install -y docker-engine
+
+
+echo ""
+echo ""
+echo done with docker install... you should double check the prevous output for any errors
+
+
+read entertocontinue
+
+systemctl enable docker.service
+systemctl start docker.service
+
+
+
+
+echo ""
+echo ""
+echo we will now check if docker was actually installed...
+
+read entertocontinue
+
+docker info
+
+
+echo ""
+echo ""
+echo ok now we will install docker ucp
+
+#echo first we need to disable the fireawll...
+#systemctl stop firewalld
+#systemctl disable firewalld
+
+echo ""
+echo ""
+echo checking the firewall state
+read entertocontinue
+firewall-cmd --state
+
+echo ""
+echo ""
+echo listing all ports in the firwall
+read entertocontinue
+firewall-cmd --list-all
+
+echo we should be allowing traffic to a bunch of ports next...
+read entertocontinue
+for i in 12376 4789 12386 2376 443 12381 12380 12382 12383 12384 12385 12379 ; do
+	echo adding $i to the firewall
+	firewall-cmd --add-port=$i/tcp --permanent
+done
+
+echo ""
+echo ""
+echo reloading the firewall
+read entertocontinue
+firewall-cmd --reload 
+
+echo ""
+echo ""
+echo listing all ports in the firwall
+read entertocontinue
+firewall-cmd --list-all
+
+echo ""
+echo ""
+echo restarting docker next...
+read entertocontinue
+
+systemctl restart docker
+
+
+echo ""
+echo ""
+echo next we will actually attempt the docker ucp installation
+read entertocontinue
+
+
+
+docker run --rm -it --name ucp \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  docker/ucp install \
+  --host-address 10.10.13.222 \
+  --interactive 
